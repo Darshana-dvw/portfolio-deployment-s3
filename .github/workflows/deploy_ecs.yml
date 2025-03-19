@@ -1,0 +1,39 @@
+name: Deploy to ECS
+
+on:
+  push:
+    branches:
+      - feature/practice
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+   
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+
+    - name: Log in to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v1
+
+ 
+    - name: Update ECS task definition
+      run: |
+        FAMILY=${{ secrets.ECS_TASK_DEFINITION }}
+        IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+        TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $FAMILY)
+        NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq ".taskDefinition.containerDefinitions[0].image = \"$IMAGE\" | .taskDefinition.containerDefinitions[0].essential = true")
+        echo $NEW_TASK_DEFINITION > new_task_definition.json
+        aws ecs register-task-definition --cli-input-json file://new_task_definition.json
+
+  
+    - name: Update ECS service
+      run: |
+        aws ecs update-service \
+          --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+          --service ${{ secrets.ECS_SERVICE_NAME }} \
+          --task-definition ${{ secrets.ECS_TASK_DEFINITION }} \
+          --force-new-deployment
+
