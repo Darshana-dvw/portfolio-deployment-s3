@@ -1,9 +1,11 @@
 name: Deploy to ec2
 on:
   workflow_dispatch:
+    branches:
+         - feature/practice
   push:
     branches:
-      - feature/practice
+        - feature/practice
 jobs:
     build-test-deploy:
         runs-on: ubuntu-latest
