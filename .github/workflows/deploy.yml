@@ -2,6 +2,7 @@ name: Deploy to ec2
 on:
   workflow_dispatch:
     branches:
+         - main
          - feature/practice
   push:
     branches:
